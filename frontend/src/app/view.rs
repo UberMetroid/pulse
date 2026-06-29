@@ -42,158 +42,164 @@ impl App {
 
                 <div class="hud-visor-grid">
                     // CPU Card
-                    <div class="hud-metric-card" title={self.stats.as_ref().map(|s| s.cpu_brand.clone()).unwrap_or_default()}>
-                        <h3>{"CPU"}</h3>
-                        {if let Some(stats) = &self.stats {
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-main-val">{format!("{:.1}%", stats.cpu_global)}</div>
-                                    <div class="card-subtext">{format!("{} Cores", stats.cpu_cores.len())}</div>
-                                    <div class="hud-bar-frame">
-                                        <div class="hud-bar-fill" style={format!("width: {}%;", stats.cpu_global)}></div>
-                                    </div>
-                                    { self.render_sparkline(&self.cpu_history, 100.0) }
-                                </div>
-                            }
-                        } else {
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-loading">{"Connecting..."}</div>
-                                    { self.render_sparkline(&self.cpu_history, 100.0) }
-                                </div>
-                            }
-                        }}
-                    </div>
+                    {if self.monitor_cpu {
+                        html! {
+                            <div class="hud-metric-card" title={self.stats.as_ref().map(|s| s.cpu_brand.clone()).unwrap_or_default()}>
+                                <h3>{"CPU"}</h3>
+                                {if let Some(stats) = &self.stats {
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-main-val">{format!("{:.1}%", stats.cpu_global)}</div>
+                                            <div class="card-subtext">{format!("{} Cores", stats.cpu_cores.len())}</div>
+                                            <div class="hud-bar-frame"><div class="hud-bar-fill" style={format!("width: {}%;", stats.cpu_global)}></div></div>
+                                            { self.render_sparkline(&self.cpu_history, 100.0) }
+                                        </div>
+                                    }
+                                } else {
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-loading">{"Connecting..."}</div>
+                                            { self.render_sparkline(&self.cpu_history, 100.0) }
+                                        </div>
+                                    }
+                                }}
+                            </div>
+                        }
+                    } else { html! {} }}
 
                     // Memory Card
-                    <div class="hud-metric-card">
-                        <h3>{"MEMORY"}</h3>
-                        {if let Some(stats) = &self.stats {
-                            let ram_used_gb = stats.ram_used as f32 / 1024.0 / 1024.0 / 1024.0;
-                            let ram_total_gb = stats.ram_total as f32 / 1024.0 / 1024.0 / 1024.0;
-                            let ram_percent = (stats.ram_used as f32 / stats.ram_total as f32 * 100.0).min(100.0).max(0.0);
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-main-val">{format!("{:.1} / {:.1} GB", ram_used_gb, ram_total_gb)}</div>
-                                    <div class="card-subtext">{format!("{:.1}% Used", ram_percent)}</div>
-                                    <div class="hud-bar-frame">
-                                        <div class="hud-bar-fill" style={format!("width: {}%;", ram_percent)}></div>
-                                    </div>
-                                    { self.render_sparkline(&self.ram_history, 100.0) }
-                                </div>
-                            }
-                        } else {
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-loading">{"Connecting..."}</div>
-                                    { self.render_sparkline(&self.ram_history, 100.0) }
-                                </div>
-                            }
-                        }}
-                    </div>
+                    {if self.monitor_memory {
+                        html! {
+                            <div class="hud-metric-card">
+                                <h3>{"MEMORY"}</h3>
+                                {if let Some(stats) = &self.stats {
+                                    let ram_used_gb = stats.ram_used as f32 / 1024.0 / 1024.0 / 1024.0;
+                                    let ram_total_gb = stats.ram_total as f32 / 1024.0 / 1024.0 / 1024.0;
+                                    let ram_percent = (stats.ram_used as f32 / stats.ram_total as f32 * 100.0).min(100.0).max(0.0);
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-main-val">{format!("{:.1} / {:.1} GB", ram_used_gb, ram_total_gb)}</div>
+                                            <div class="card-subtext">{format!("{:.1}% Used", ram_percent)}</div>
+                                            <div class="hud-bar-frame"><div class="hud-bar-fill" style={format!("width: {}%;", ram_percent)}></div></div>
+                                            { self.render_sparkline(&self.ram_history, 100.0) }
+                                        </div>
+                                    }
+                                } else {
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-loading">{"Connecting..."}</div>
+                                            { self.render_sparkline(&self.ram_history, 100.0) }
+                                        </div>
+                                    }
+                                }}
+                            </div>
+                        }
+                    } else { html! {} }}
 
                     // Storage Card
-                    <div class="hud-metric-card">
-                        <h3>{"STORAGE"}</h3>
-                        {if let Some(stats) = &self.stats {
-                            let disk_used_gb = stats.disk_used as f32 / 1024.0 / 1024.0 / 1024.0;
-                            let disk_total_gb = stats.disk_total as f32 / 1024.0 / 1024.0 / 1024.0;
-                            let disk_percent = (stats.disk_used as f32 / stats.disk_total as f32 * 100.0).min(100.0).max(0.0);
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-main-val">{format!("{:.1} / {:.1} GB", disk_used_gb, disk_total_gb)}</div>
-                                    <div class="card-subtext">{format!("{:.1}% Used", disk_percent)}</div>
-                                    <div class="hud-bar-frame">
-                                        <div class="hud-bar-fill" style={format!("width: {}%;", disk_percent)}></div>
-                                    </div>
-                                    { self.render_sparkline(&self.disk_history, 100.0) }
-                                </div>
-                            }
-                        } else {
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-loading">{"Connecting..."}</div>
-                                    { self.render_sparkline(&self.disk_history, 100.0) }
-                                </div>
-                            }
-                        }}
-                    </div>
+                    {if self.monitor_storage {
+                        html! {
+                            <div class="hud-metric-card">
+                                <h3>{"STORAGE"}</h3>
+                                {if let Some(stats) = &self.stats {
+                                    let disk_used_gb = stats.disk_used as f32 / 1024.0 / 1024.0 / 1024.0;
+                                    let disk_total_gb = stats.disk_total as f32 / 1024.0 / 1024.0 / 1024.0;
+                                    let disk_percent = (stats.disk_used as f32 / stats.disk_total as f32 * 100.0).min(100.0).max(0.0);
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-main-val">{format!("{:.1} / {:.1} GB", disk_used_gb, disk_total_gb)}</div>
+                                            <div class="card-subtext">{format!("{:.1}% Used", disk_percent)}</div>
+                                            <div class="hud-bar-frame"><div class="hud-bar-fill" style={format!("width: {}%;", disk_percent)}></div></div>
+                                            { self.render_sparkline(&self.disk_history, 100.0) }
+                                        </div>
+                                    }
+                                } else {
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-loading">{"Connecting..."}</div>
+                                            { self.render_sparkline(&self.disk_history, 100.0) }
+                                        </div>
+                                    }
+                                }}
+                            </div>
+                        }
+                    } else { html! {} }}
 
                     // Network Card
-                    <div class="hud-metric-card">
-                        <h3>{"NETWORK"}</h3>
-                        {if let Some(stats) = &self.stats {
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-main-val download-glow">{format!("↓ {}", self.format_bytes(stats.net_in))}</div>
-                                    <div class="card-subtext upload-glow">{format!("↑ {}", self.format_bytes(stats.net_out))}</div>
-                                    { self.render_sparkline(&self.net_history, 0.0) }
-                                </div>
-                            }
-                        } else {
-                            html! {
-                                <div class="card-metric-block">
-                                    <div class="card-loading">{"Connecting..."}</div>
-                                    { self.render_sparkline(&self.net_history, 0.0) }
-                                </div>
-                            }
-                        }}
-                    </div>
+                    {if self.monitor_network {
+                        html! {
+                            <div class="hud-metric-card">
+                                <h3>{"NETWORK"}</h3>
+                                {if let Some(stats) = &self.stats {
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-main-val download-glow">{format!("↓ {}", self.format_bytes(stats.net_in))}</div>
+                                            <div class="card-subtext upload-glow">{format!("↑ {}", self.format_bytes(stats.net_out))}</div>
+                                            { self.render_sparkline(&self.net_history, 0.0) }
+                                        </div>
+                                    }
+                                } else {
+                                    html! {
+                                        <div class="card-metric-block">
+                                            <div class="card-loading">{"Connecting..."}</div>
+                                            { self.render_sparkline(&self.net_history, 0.0) }
+                                        </div>
+                                    }
+                                }}
+                            </div>
+                        }
+                    } else { html! {} }}
 
                     // GPU Card(s)
-                    {if let Some(stats) = &self.stats {
-                        if stats.gpus.is_empty() {
-                            html! {
-                                <div class="hud-metric-card">
-                                    <h3>{"GPU"}</h3>
-                                    <div class="card-metric-block">
-                                        <div class="card-main-val" style="color: var(--text-muted); font-size: 1.5rem;">{"OFFLINE"}</div>
-                                        <div class="card-subtext">{"No Active GPU"}</div>
-                                        { self.render_sparkline(&[], 100.0) }
-                                    </div>
-                                </div>
-                            }
-                        } else {
-                            stats.gpus.iter().enumerate().map(|(idx, gpu)| {
-                                let history = self.gpu_histories.get(idx).map(|h| h.as_slice()).unwrap_or(&[]);
-                                let card_title = if stats.gpus.len() > 1 {
-                                    format!("GPU {}", idx + 1)
-                                } else {
-                                    "GPU".to_string()
-                                };
-                                let vram_subtext = if let (Some(used), Some(total)) = (gpu.mem_used, gpu.mem_total) {
-                                    let used_gb = used as f32 / 1024.0 / 1024.0 / 1024.0;
-                                    let total_gb = total as f32 / 1024.0 / 1024.0 / 1024.0;
-                                    format!("{:.1} / {:.1} GB VRAM", used_gb, total_gb)
-                                } else {
-                                    "No VRAM Telemetry".to_string()
-                                };
-                                html! {
-                                    <div class="hud-metric-card" key={idx} title={gpu.name.clone()}>
-                                        <h3>{card_title}</h3>
-                                        <div class="card-metric-block">
-                                            <div class="card-main-val">{format!("{:.0}%", gpu.usage)}</div>
-                                            <div class="card-subtext">{vram_subtext}</div>
-                                            <div class="hud-bar-frame">
-                                                <div class="hud-bar-fill" style={format!("width: {}%;", gpu.usage)}></div>
+                    {if self.monitor_gpu {
+                        html! {
+                            <>
+                            {if let Some(stats) = &self.stats {
+                                if stats.gpus.is_empty() {
+                                    html! {
+                                        <div class="hud-metric-card">
+                                            <h3>{"GPU"}</h3>
+                                            <div class="card-metric-block">
+                                                <div class="card-main-val" style="color: var(--text-muted); font-size: 1.5rem;">{"OFFLINE"}</div>
+                                                <div class="card-subtext">{"No Active GPU"}</div>
+                                                { self.render_sparkline(&[], 100.0) }
                                             </div>
-                                            { self.render_sparkline(history, 100.0) }
+                                        </div>
+                                    }
+                                } else {
+                                    stats.gpus.iter().enumerate().map(|(idx, gpu)| {
+                                        let history = self.gpu_histories.get(idx).map(|h| h.as_slice()).unwrap_or(&[]);
+                                        let card_title = if stats.gpus.len() > 1 { format!("GPU {}", idx + 1) } else { "GPU".to_string() };
+                                        let vram_subtext = if let (Some(used), Some(total)) = (gpu.mem_used, gpu.mem_total) {
+                                            format!("{:.1} / {:.1} GB VRAM", used as f32 / 1024.0 / 1024.0 / 1024.0, total as f32 / 1024.0 / 1024.0 / 1024.0)
+                                        } else { "No VRAM Telemetry".to_string() };
+                                        html! {
+                                            <div class="hud-metric-card" key={idx} title={gpu.name.clone()}>
+                                                <h3>{card_title}</h3>
+                                                <div class="card-metric-block">
+                                                    <div class="card-main-val">{format!("{:.0}%", gpu.usage)}</div>
+                                                    <div class="card-subtext">{vram_subtext}</div>
+                                                    <div class="hud-bar-frame"><div class="hud-bar-fill" style={format!("width: {}%;", gpu.usage)}></div></div>
+                                                    { self.render_sparkline(history, 100.0) }
+                                                </div>
+                                            </div>
+                                        }
+                                    }).collect::<Html>()
+                                }
+                            } else {
+                                html! {
+                                    <div class="hud-metric-card">
+                                        <h3>{"GPU"}</h3>
+                                        <div class="card-metric-block">
+                                            <div class="card-loading">{"Connecting..."}</div>
+                                            { self.render_sparkline(&[], 100.0) }
                                         </div>
                                     </div>
                                 }
-                            }).collect::<Html>()
+                            }}
+                            </>
                         }
-                    } else {
-                        html! {
-                            <div class="hud-metric-card">
-                                <h3>{"GPU"}</h3>
-                                <div class="card-metric-block">
-                                    <div class="card-loading">{"Connecting..."}</div>
-                                    { self.render_sparkline(&[], 100.0) }
-                                </div>
-                            </div>
-                        }
-                    }}
+                    } else { html! {} }}
                 </div>
             </div>
         }
@@ -226,14 +232,7 @@ impl App {
         html! {
             <div style="width: 100%; height: 16px; margin-top: 0.3rem; opacity: 0.85;">
                 <svg width="100%" height="16" viewBox={format!("0 0 {} {}", width, height)} preserveAspectRatio="none" style="display: block; overflow: visible;">
-                    <polyline
-                        fill="none"
-                        stroke="var(--primary)"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        points={points}
-                    />
+                    <polyline fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points={points} />
                 </svg>
             </div>
         }

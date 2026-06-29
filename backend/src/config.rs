@@ -16,6 +16,11 @@ pub struct AppConfig {
     pub show_version: bool,
     pub show_github: bool,
     pub refresh_interval: u64,
+    pub monitor_cpu: bool,
+    pub monitor_memory: bool,
+    pub monitor_storage: bool,
+    pub monitor_network: bool,
+    pub monitor_gpu: bool,
 }
 
 impl AppConfig {
@@ -109,6 +114,26 @@ impl AppConfig {
             .and_then(|s| s.parse().ok())
             .unwrap_or(2);
 
+        let monitor_cpu = std::env::var("PULSE_MONITOR_CPU")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
+        let monitor_memory = std::env::var("PULSE_MONITOR_MEMORY")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
+        let monitor_storage = std::env::var("PULSE_MONITOR_STORAGE")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
+        let monitor_network = std::env::var("PULSE_MONITOR_NETWORK")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
+        let monitor_gpu = std::env::var("PULSE_MONITOR_GPU")
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
+
         Self {
             port,
             site_title,
@@ -126,6 +151,11 @@ impl AppConfig {
             show_version,
             show_github,
             refresh_interval,
+            monitor_cpu,
+            monitor_memory,
+            monitor_storage,
+            monitor_network,
+            monitor_gpu,
         }
     }
 }

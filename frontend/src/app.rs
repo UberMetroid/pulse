@@ -53,6 +53,11 @@ pub struct App {
     pub active_notification: Option<(String, String)>,
     pub console_font_size: f32,
     pub console_ref: NodeRef,
+    pub monitor_cpu: bool,
+    pub monitor_memory: bool,
+    pub monitor_storage: bool,
+    pub monitor_network: bool,
+    pub monitor_gpu: bool,
 }
 
 impl Component for App {
@@ -105,6 +110,11 @@ impl Component for App {
             active_notification: None,
             console_font_size: 0.85,
             console_ref: NodeRef::default(),
+            monitor_cpu: true,
+            monitor_memory: true,
+            monitor_storage: true,
+            monitor_network: true,
+            monitor_gpu: true,
         }
     }
 

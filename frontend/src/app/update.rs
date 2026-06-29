@@ -23,6 +23,11 @@ impl App {
                 self.enable_translation = json["enableTranslation"].as_bool().unwrap_or(false);
                 self.enable_themes = json["enableThemes"].as_bool().unwrap_or(true);
                 self.enable_print = json["enablePrint"].as_bool().unwrap_or(false);
+                self.monitor_cpu = json["monitorCpu"].as_bool().unwrap_or(true);
+                self.monitor_memory = json["monitorMemory"].as_bool().unwrap_or(true);
+                self.monitor_storage = json["monitorStorage"].as_bool().unwrap_or(true);
+                self.monitor_network = json["monitorNetwork"].as_bool().unwrap_or(true);
+                self.monitor_gpu = json["monitorGpu"].as_bool().unwrap_or(true);
 
                 self.terminal_logs.push(format!(
                     "[SYSTEM] Config loaded. Site: {}, Pin Required: {}",

@@ -225,6 +225,11 @@ async fn serve_config(axum::extract::State(state): axum::extract::State<AppState
         "enable_themes": state.config.enable_themes,
         "enablePrint": state.config.enable_print,
         "enable_print": state.config.enable_print,
+        "monitorCpu": state.config.monitor_cpu,
+        "monitorMemory": state.config.monitor_memory,
+        "monitorStorage": state.config.monitor_storage,
+        "monitorNetwork": state.config.monitor_network,
+        "monitorGpu": state.config.monitor_gpu,
     }))
 }
 
