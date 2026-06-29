@@ -29,6 +29,21 @@ impl App {
 
         html! {
             <div class="hud-visor-container">
+                <div class="hud-console-wrapper">
+                    <div class="hud-console-header">
+                        <span>{console_title}</span>
+                        <div class="hud-console-controls">
+                            <span>{format!("Uptime: {}", uptime_str)}</span>
+                            <button onclick={ctx.link().callback(|_| Msg::ClearTerminal)}>{"CLEAR"}</button>
+                        </div>
+                    </div>
+                    <div class="hud-console-body">
+                        {for self.terminal_logs.iter().rev().map(|log| {
+                            html! { <div class="console-line">{log}</div> }
+                        })}
+                    </div>
+                </div>
+
                 <div class="hud-visor-grid">
                     // CPU Card
                     <div class="hud-metric-card">
@@ -176,21 +191,6 @@ impl App {
                             </div>
                         }
                     }}
-                </div>
-
-                <div class="hud-console-wrapper">
-                    <div class="hud-console-header">
-                        <span>{console_title}</span>
-                        <div class="hud-console-controls">
-                            <span>{format!("Uptime: {}", uptime_str)}</span>
-                            <button onclick={ctx.link().callback(|_| Msg::ClearTerminal)}>{"CLEAR"}</button>
-                        </div>
-                    </div>
-                    <div class="hud-console-body">
-                        {for self.terminal_logs.iter().rev().map(|log| {
-                            html! { <div class="console-line">{log}</div> }
-                        })}
-                    </div>
                 </div>
             </div>
         }

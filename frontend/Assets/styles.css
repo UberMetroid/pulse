@@ -547,11 +547,11 @@
 .hud-visor-container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    padding: 1.5rem;
-    max-width: 1200px;
-    margin: 0 auto;
+    gap: 1.5rem;
+    padding: 1rem;
+    max-width: 100%;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .hud-loading-frame {
