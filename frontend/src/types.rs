@@ -21,4 +21,5 @@ pub struct SystemStats {
     pub disk_total: u64,
     pub gpu: Option<GpuStats>,
     pub uptime: u64,
+    pub hostname: String,
 }

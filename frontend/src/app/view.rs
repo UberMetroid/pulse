@@ -56,12 +56,18 @@ impl App {
             "--".to_string()
         };
 
+        let console_title = if let Some(stats) = &self.stats {
+            stats.hostname.to_uppercase()
+        } else {
+            "CONSOLE MONITOR".to_string()
+        };
+
         html! {
             <div class="hud-visor-container">
                 <div class="hud-visor-grid">
                     // CPU Card
                     <div class="hud-metric-card">
-                        <h3>{"PROCESSOR LOAD"}</h3>
+                        <h3>{"CPU"}</h3>
                         {if let Some(stats) = &self.stats {
                             html! {
                                 <div class="card-metric-block">
@@ -79,7 +85,7 @@ impl App {
 
                     // RAM Card
                     <div class="hud-metric-card">
-                        <h3>{"SYSTEM MEMORY"}</h3>
+                        <h3>{"MEMORY"}</h3>
                         {if let Some(stats) = &self.stats {
                             let ram_used_gb = stats.ram_used as f32 / 1024.0 / 1024.0 / 1024.0;
                             let ram_total_gb = stats.ram_total as f32 / 1024.0 / 1024.0 / 1024.0;
@@ -100,7 +106,7 @@ impl App {
 
                     // Storage Card
                     <div class="hud-metric-card">
-                        <h3>{"DISK STORAGE"}</h3>
+                        <h3>{"STORAGE"}</h3>
                         {if let Some(stats) = &self.stats {
                             let disk_used_gb = stats.disk_used as f32 / 1024.0 / 1024.0 / 1024.0;
                             let disk_total_gb = stats.disk_total as f32 / 1024.0 / 1024.0 / 1024.0;
@@ -121,7 +127,7 @@ impl App {
 
                     // Network Card
                     <div class="hud-metric-card">
-                        <h3>{"NETWORK TRAFFIC"}</h3>
+                        <h3>{"NETWORK"}</h3>
                         {if let Some(stats) = &self.stats {
                             html! {
                                 <div class="card-metric-block">
@@ -136,7 +142,7 @@ impl App {
 
                     // GPU Card
                     <div class="hud-metric-card">
-                        <h3>{"GPU ACCELERATION"}</h3>
+                        <h3>{"GPU"}</h3>
                         {if let Some(stats) = &self.stats {
                             if let Some(gpu) = &stats.gpu {
                                 html! {
@@ -164,7 +170,7 @@ impl App {
 
                 <div class="hud-console-wrapper">
                     <div class="hud-console-header">
-                        <span>{"CONSOLE MONITOR TERMINAL"}</span>
+                        <span>{console_title}</span>
                         <div class="hud-console-controls">
                             <span>{format!("Uptime: {}", uptime_str)}</span>
                             <button onclick={ctx.link().callback(|_| Msg::ClearTerminal)}>{"CLEAR"}</button>

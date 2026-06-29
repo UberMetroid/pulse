@@ -18,6 +18,7 @@ pub struct SystemStats {
     pub disk_total: u64,
     pub gpu: Option<GpuStats>,
     pub uptime: u64,
+    pub hostname: String,
 }
 
 pub struct SystemMonitor {
@@ -91,6 +92,9 @@ impl SystemMonitor {
             // System Uptime (associated function in sysinfo)
             let uptime = System::uptime();
 
+            // Fetch Hostname
+            let hostname = System::host_name().unwrap_or_else(|| "localhost".to_string());
+
             let stats = SystemStats {
                 cpu_global,
                 cpu_cores,
@@ -102,6 +106,7 @@ impl SystemMonitor {
                 disk_total,
                 gpu,
                 uptime,
+                hostname,
             };
 
             // Update shared state

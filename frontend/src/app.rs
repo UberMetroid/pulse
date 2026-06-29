@@ -130,7 +130,7 @@ impl Component for App {
 
                 <Footer
                     show_version={true}
-                    version={"3.0.0".to_string()}
+                    version={env!("CARGO_PKG_VERSION").to_string()}
                     show_github={true}
                     github_url={Some("https://github.com/UberMetroid/pulse".to_string())}
                 />
