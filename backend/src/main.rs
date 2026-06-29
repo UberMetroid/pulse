@@ -129,6 +129,7 @@ async fn main() {
             TitleState(server_config.clone()),
             title_injection_layer,
         ))
+        .layer(axum::middleware::from_fn(fix_content_length_middleware))
         .layer(middleware::from_fn_with_state(
             HstsState(server_config.clone()),
             hsts_layer,
@@ -243,4 +244,23 @@ async fn graceful_shutdown() {
 
     tracing::info!("draining connections (5s)");
     tokio::time::sleep(Duration::from_secs(5)).await;
+}
+
+async fn fix_content_length_middleware(
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    let mut response = next.run(request).await;
+
+    let is_html = response
+        .headers()
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|s| s.starts_with("text/html"));
+
+    if is_html {
+        response.headers_mut().remove(axum::http::header::CONTENT_LENGTH);
+    }
+
+    response
 }
