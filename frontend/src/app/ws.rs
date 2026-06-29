@@ -39,7 +39,6 @@ impl App {
         let link = ctx.link().clone();
         let onopen_callback = Closure::<dyn FnMut()>::new(move || {
             web_sys::console::log_1(&JsValue::from_str("[WS] Connection opened successfully."));
-            // Trigger a log update
             link.send_message(Msg::WsError("[WS] Connection established. Visor online.".to_string()));
         });
         ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
@@ -48,12 +47,24 @@ impl App {
         // OnMessage callback
         let link = ctx.link().clone();
         let onmessage_callback = Closure::<dyn FnMut(MessageEvent)>::new(move |e: MessageEvent| {
-            if let Some(txt) = e.data().as_string() {
-                if let Ok(stats) = serde_json::from_str::<SystemStats>(&txt) {
-                    link.send_message(Msg::UpdateStats(stats));
-                } else {
-                    web_sys::console::error_1(&JsValue::from_str(&format!("[WS] Failed to parse stats JSON: {}", txt)));
+            let data = e.data();
+            web_sys::console::log_2(&JsValue::from_str("[WS] Received raw data:"), &data);
+            
+            if let Some(txt) = data.as_string() {
+                match serde_json::from_str::<SystemStats>(&txt) {
+                    Ok(stats) => {
+                        link.send_message(Msg::UpdateStats(stats));
+                    }
+                    Err(err) => {
+                        let err_msg = format!("[WS] JSON Parse error: {:?} (Data: {})", err, txt);
+                        web_sys::console::error_1(&JsValue::from_str(&err_msg));
+                        link.send_message(Msg::WsError(err_msg));
+                    }
                 }
+            } else {
+                let err_msg = format!("[WS] Received non-string data (type: {})", data.js_typeof().as_string().unwrap_or_default());
+                web_sys::console::warn_1(&JsValue::from_str(&err_msg));
+                link.send_message(Msg::WsError(err_msg));
             }
         });
         ws.set_onmessage(Some(onmessage_callback.as_ref().unchecked_ref()));

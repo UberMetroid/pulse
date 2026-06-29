@@ -24,6 +24,11 @@ impl App {
                 self.enable_themes = json["enableThemes"].as_bool().unwrap_or(true);
                 self.enable_print = json["enablePrint"].as_bool().unwrap_or(false);
 
+                self.terminal_logs.push(format!(
+                    "[SYSTEM] Config loaded. Site: {}, Pin Required: {}",
+                    self.site_title, self.pin_required
+                ));
+
                 if !self.pin_required {
                     self.is_authenticated = true;
                     self.connect_ws(ctx);
