@@ -69,9 +69,15 @@ impl App {
             Some(s) => s,
             None => {
                 return html! {
-                    <div class="hud-loading-frame">
+                    <div class="hud-loading-frame" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; width: 100%; height: 100%;">
                         <div class="hud-spinner"></div>
-                        <p>{"ACQUIRING HOST TELEMETRY..."}</p>
+                        <p style="font-family: 'Share Tech Mono', monospace; font-size: 1.2rem; letter-spacing: 2px;">{"ACQUIRING HOST TELEMETRY..."}</p>
+                        <div style="margin-top: 1.5rem; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: #00ffcc; text-align: left; width: 90%; max-width: 600px; max-height: 250px; overflow-y: auto; border: 1px solid rgba(0, 255, 204, 0.3); padding: 1rem; background: rgba(0,10,10,0.85); box-shadow: 0 0 15px rgba(0, 255, 204, 0.15); border-radius: 8px;">
+                            <div style="border-bottom: 1px solid rgba(0, 255, 204, 0.2); padding-bottom: 0.5rem; margin-bottom: 0.5rem; font-weight: bold; text-transform: uppercase;">{"Visor System Diagnostic Console"}</div>
+                            {for self.terminal_logs.iter().rev().take(10).map(|log| html! {
+                                <div style="margin-bottom: 0.25rem; line-height: 1.3; font-family: monospace;">{log}</div>
+                            })}
+                        </div>
                     </div>
                 };
             }
