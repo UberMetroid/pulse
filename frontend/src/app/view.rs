@@ -31,28 +31,42 @@ impl App {
             <div class="hud-visor-container">
                 <div class="hud-console-wrapper">
                     <div class="hud-console-header">
-                        <span>{console_title}</span>
+                        <span class="hostname-glow">
+                            <span class="live-pulse">{"● "}</span>
+                            {console_title}
+                        </span>
                         <div class="hud-console-controls">
-                            <span>{format!("Uptime: {}", uptime_str)}</span>
+                            <button onclick={ctx.link().callback(|_| Msg::DecreaseFontSize)} title="Decrease Font Size" class="font-btn">{"A-"}</button>
+                            <button onclick={ctx.link().callback(|_| Msg::IncreaseFontSize)} title="Increase Font Size" class="font-btn">{"A+"}</button>
+                            <span class="uptime-label">{format!("Uptime: {}", uptime_str)}</span>
                             <button onclick={ctx.link().callback(|_| Msg::ClearTerminal)}>{"CLEAR"}</button>
                         </div>
                     </div>
-                    <div class="hud-console-body">
-                        {for self.terminal_logs.iter().rev().map(|log| {
-                            html! { <div class="console-line">{log}</div> }
+                    <div class="hud-console-body" ref={self.console_ref.clone()} style={format!("font-size: {}rem;", self.console_font_size)}>
+                        {for self.terminal_logs.iter().map(|log| {
+                            let log_cls = if log.contains("ERROR") || log.contains("Error") || log.contains("Failed") || log.contains("failed") || log.contains("CRITICAL") {
+                                "console-line error"
+                            } else if log.contains("warning") || log.contains("WARNING") || log.contains("warn") || log.contains("WARN") {
+                                "console-line warning"
+                            } else if log.contains("[SYSTEM]") || log.contains("[WS]") {
+                                "console-line system"
+                            } else {
+                                "console-line info"
+                            };
+                            html! { <div class={log_cls}>{log}</div> }
                         })}
                     </div>
                 </div>
 
                 <div class="hud-visor-grid">
                     // CPU Card
-                    <div class="hud-metric-card">
+                    <div class="hud-metric-card" title={self.stats.as_ref().map(|s| s.cpu_brand.clone()).unwrap_or_default()}>
                         <h3>{"CPU"}</h3>
                         {if let Some(stats) = &self.stats {
                             html! {
                                 <div class="card-metric-block">
                                     <div class="card-main-val">{format!("{:.1}%", stats.cpu_global)}</div>
-                                    <div class="card-subtext">{format!("{} Threads", stats.cpu_cores.len())}</div>
+                                    <div class="card-subtext">{format!("{} Cores", stats.cpu_cores.len())}</div>
                                     <div class="hud-bar-frame">
                                         <div class="hud-bar-fill" style={format!("width: {}%;", stats.cpu_global)}></div>
                                     </div>
@@ -165,12 +179,19 @@ impl App {
                                 } else {
                                     "GPU".to_string()
                                 };
+                                let vram_subtext = if let (Some(used), Some(total)) = (gpu.mem_used, gpu.mem_total) {
+                                    let used_gb = used as f32 / 1024.0 / 1024.0 / 1024.0;
+                                    let total_gb = total as f32 / 1024.0 / 1024.0 / 1024.0;
+                                    format!("{:.1} / {:.1} GB VRAM", used_gb, total_gb)
+                                } else {
+                                    "No VRAM Telemetry".to_string()
+                                };
                                 html! {
-                                    <div class="hud-metric-card" key={idx}>
+                                    <div class="hud-metric-card" key={idx} title={gpu.name.clone()}>
                                         <h3>{card_title}</h3>
                                         <div class="card-metric-block">
                                             <div class="card-main-val">{format!("{:.0}%", gpu.usage)}</div>
-                                            <div class="card-subtext" title={gpu.name.clone()}>{&gpu.name}</div>
+                                            <div class="card-subtext">{vram_subtext}</div>
                                             <div class="hud-bar-frame">
                                                 <div class="hud-bar-fill" style={format!("width: {}%;", gpu.usage)}></div>
                                             </div>

@@ -16,6 +16,7 @@ pub struct SystemStats {
     pub net_out: u64,
     pub disk_used: u64,
     pub disk_total: u64,
+    pub cpu_brand: String,
     pub gpus: Vec<GpuStats>,
     pub uptime: u64,
     pub hostname: String,
@@ -87,6 +88,11 @@ impl SystemMonitor {
             let disk_total = total_space;
             let disk_used = total_space - total_available;
 
+            // Fetch CPU brand
+            let cpu_brand = self.sys.cpus().first()
+                .map(|c| c.brand().trim().to_string())
+                .unwrap_or_else(|| "Unknown CPU".to_string());
+
             // Fetch GPU stats
             let gpus = gpu::get_gpu_stats();
 
@@ -108,6 +114,7 @@ impl SystemMonitor {
                 net_out,
                 disk_used,
                 disk_total,
+                cpu_brand,
                 gpus,
                 uptime,
                 hostname,

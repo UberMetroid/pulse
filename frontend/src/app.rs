@@ -26,6 +26,8 @@ pub enum Msg {
     ChangeLanguage(Language),
     ClearTerminal,
     CheckFallback,
+    IncreaseFontSize,
+    DecreaseFontSize,
 }
 
 pub struct App {
@@ -49,6 +51,8 @@ pub struct App {
     pub net_history: Vec<f32>,
     pub gpu_histories: Vec<Vec<f32>>,
     pub active_notification: Option<(String, String)>,
+    pub console_font_size: f32,
+    pub console_ref: NodeRef,
 }
 
 impl Component for App {
@@ -99,6 +103,8 @@ impl Component for App {
             net_history: Vec::new(),
             gpu_histories: Vec::new(),
             active_notification: None,
+            console_font_size: 0.85,
+            console_ref: NodeRef::default(),
         }
     }
 
@@ -115,6 +121,10 @@ impl Component for App {
                     link.send_message(Msg::CheckFallback);
                 }
             });
+        }
+
+        if let Some(el) = self.console_ref.cast::<web_sys::HtmlElement>() {
+            el.set_scroll_top(el.scroll_height());
         }
     }
 

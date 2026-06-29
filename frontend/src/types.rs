@@ -19,6 +19,7 @@ pub struct SystemStats {
     pub net_out: u64,
     pub disk_used: u64,
     pub disk_total: u64,
+    pub cpu_brand: String,
     pub gpus: Vec<GpuStats>,
     pub uptime: u64,
     pub hostname: String,

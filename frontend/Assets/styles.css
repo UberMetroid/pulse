@@ -778,3 +778,52 @@
 .hud-console-body::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
 }
+
+/* Console sizer and pulser updates */
+.live-pulse {
+    color: #00ffcc;
+    animation: pulse-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+    from { opacity: 0.3; text-shadow: 0 0 2px #00ffcc; }
+    to { opacity: 1.0; text-shadow: 0 0 8px #00ffcc, 0 0 16px #00ffcc; }
+}
+
+.font-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: monospace;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-right: 0.3rem;
+    transition: var(--transition);
+}
+
+.font-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 5px var(--primary-glow);
+}
+
+.console-line.error {
+    color: #ff3366;
+    text-shadow: 0 0 4px rgba(255, 51, 102, 0.4);
+}
+
+.console-line.warning {
+    color: #ffcc00;
+    text-shadow: 0 0 4px rgba(255, 204, 0, 0.4);
+}
+
+.console-line.system {
+    color: #00ffcc;
+    text-shadow: 0 0 4px rgba(0, 255, 204, 0.4);
+}
+
+.console-line.info {
+    color: var(--text-secondary);
+}

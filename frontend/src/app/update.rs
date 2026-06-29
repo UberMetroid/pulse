@@ -171,6 +171,14 @@ impl App {
                 self.terminal_logs.push("[SYSTEM] Terminal buffer cleared.".to_string());
                 true
             }
+            Msg::IncreaseFontSize => {
+                self.console_font_size = (self.console_font_size + 0.05).min(1.5);
+                true
+            }
+            Msg::DecreaseFontSize => {
+                self.console_font_size = (self.console_font_size - 0.05).max(0.65);
+                true
+            }
             Msg::CheckFallback => {
                 let ws_connected = self.ws.as_ref().map(|w| w.ready_state() == 1).unwrap_or(false);
                 if !ws_connected && self.is_authenticated {
