@@ -92,28 +92,35 @@ impl App {
                 true
             }
             Msg::UpdateStats(stats) => {
-                let timestamp = chrono::Local::now().format("%H:%M:%S").to_string();
-                let gpu_text = stats.gpu.as_ref().map_or("None".to_string(), |g| {
-                    format!("{} ({}% / {}°C)", g.name, g.usage, g.temp.unwrap_or(0.0))
-                });
-                let log = format!(
-                    "[{}] CPU: {:.1}%, RAM: {:.1} GB, GPU: {}, Net In: {:.2} MB/s, Net Out: {:.2} MB/s",
-                    timestamp,
-                    stats.cpu_global,
-                    (stats.ram_used as f64 / 1024.0 / 1024.0 / 1024.0),
-                    gpu_text,
-                    (stats.net_in as f64 / 1024.0 / 1024.0),
-                    (stats.net_out as f64 / 1024.0 / 1024.0)
-                );
-                self.terminal_logs.push(log);
-                if self.terminal_logs.len() > 100 {
-                    self.terminal_logs.remove(0);
-                }
+                self.terminal_logs = stats.sys_logs.clone();
+                self.active_notification = None;
+
+                // Update history vectors
+                self.cpu_history.push(stats.cpu_global);
+                if self.cpu_history.len() > 15 { self.cpu_history.remove(0); }
+
+                let ram_percent = (stats.ram_used as f32 / stats.ram_total as f32 * 100.0).min(100.0).max(0.0);
+                self.ram_history.push(ram_percent);
+                if self.ram_history.len() > 15 { self.ram_history.remove(0); }
+
+                let disk_percent = (stats.disk_used as f32 / stats.disk_total as f32 * 100.0).min(100.0).max(0.0);
+                self.disk_history.push(disk_percent);
+                if self.disk_history.len() > 15 { self.disk_history.remove(0); }
+
+                let net_total = (stats.net_in + stats.net_out) as f32;
+                self.net_history.push(net_total);
+                if self.net_history.len() > 15 { self.net_history.remove(0); }
+
+                let gpu_val = stats.gpu.as_ref().map(|g| g.usage).unwrap_or(0.0);
+                self.gpu_history.push(gpu_val);
+                if self.gpu_history.len() > 15 { self.gpu_history.remove(0); }
+
                 self.stats = Some(stats);
                 true
             }
             Msg::WsError(err) => {
                 self.terminal_logs.push(format!("[WS ERROR] {}", err));
+                self.active_notification = Some(("Disconnected".to_string(), "error".to_string()));
                 self.ws = None; // Reset so reconnect attempts are allowed
                 let link = ctx.link().clone();
                 Timeout::new(5000, move || {
@@ -138,10 +145,6 @@ impl App {
             Msg::ChangeLanguage(lang) => {
                 self.language = lang;
                 StorageService::set_item("language", lang.code());
-                true
-            }
-            Msg::ToggleTerminal => {
-                self.terminal_open = !self.terminal_open;
                 true
             }
             Msg::ClearTerminal => {

@@ -7,6 +7,7 @@ use crate::storage::StorageService;
 use crate::types::SystemStats;
 use shared_frontend::{Footer, Header, i18n::Language};
 
+mod login;
 mod update;
 mod view;
 mod ws;
@@ -21,7 +22,6 @@ pub enum Msg {
     WsError(String),
     ToggleTheme,
     ChangeLanguage(Language),
-    ToggleTerminal,
     ClearTerminal,
     CheckFallback,
 }
@@ -38,10 +38,15 @@ pub struct App {
     pub stats: Option<SystemStats>,
     pub ws: Option<WebSocket>,
     pub terminal_logs: Vec<String>,
-    pub terminal_open: bool,
     pub enable_translation: bool,
     pub enable_themes: bool,
     pub enable_print: bool,
+    pub cpu_history: Vec<f32>,
+    pub ram_history: Vec<f32>,
+    pub disk_history: Vec<f32>,
+    pub net_history: Vec<f32>,
+    pub gpu_history: Vec<f32>,
+    pub active_notification: Option<(String, String)>,
 }
 
 impl Component for App {
@@ -54,9 +59,19 @@ impl Component for App {
 
         let link = ctx.link().clone();
         wasm_bindgen_futures::spawn_local(async move {
-            if let Ok(resp) = Request::get("/config").send().await {
-                if let Ok(json) = resp.json::<Value>().await {
-                    link.send_message(Msg::LoadConfig(json));
+            match Request::get("/config").send().await {
+                Ok(resp) => {
+                    match resp.json::<Value>().await {
+                        Ok(json) => {
+                            link.send_message(Msg::LoadConfig(json));
+                        }
+                        Err(err) => {
+                            link.send_message(Msg::WsError(format!("[ERROR] Failed to parse config JSON: {:?}", err)));
+                        }
+                    }
+                }
+                Err(err) => {
+                    link.send_message(Msg::WsError(format!("[ERROR] Failed to fetch /config: {:?}", err)));
                 }
             }
         });
@@ -73,10 +88,15 @@ impl Component for App {
             stats: None,
             ws: None,
             terminal_logs: vec!["[SYSTEM] Initializing metrics dashboard...".to_string()],
-            terminal_open: true,
             enable_translation: false,
             enable_themes: true,
             enable_print: false,
+            cpu_history: Vec::new(),
+            ram_history: Vec::new(),
+            disk_history: Vec::new(),
+            net_history: Vec::new(),
+            gpu_history: Vec::new(),
+            active_notification: None,
         }
     }
 
@@ -133,7 +153,15 @@ impl Component for App {
                     version={env!("CARGO_PKG_VERSION").to_string()}
                     show_github={true}
                     github_url={Some("https://github.com/UberMetroid/pulse".to_string())}
-                />
+                >
+                    {
+                        if let Some((msg, cls)) = &self.active_notification {
+                            html! { <div class={format!("footer-status-text {}", cls)}>{ msg }</div> }
+                        } else {
+                            html! { <div class="footer-status-text success">{"Ready"}</div> }
+                        }
+                    }
+                </Footer>
             </>
         }
     }

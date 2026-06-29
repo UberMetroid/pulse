@@ -22,4 +22,5 @@ pub struct SystemStats {
     pub gpu: Option<GpuStats>,
     pub uptime: u64,
     pub hostname: String,
+    pub sys_logs: Vec<String>,
 }

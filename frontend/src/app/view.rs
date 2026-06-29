@@ -3,54 +3,19 @@ use crate::app::Msg;
 use yew::prelude::*;
 
 impl App {
-    pub fn view_login(&self, ctx: &Context<Self>) -> Html {
-        let pin_len = self.pin_length;
-        let error_html = self.error_message.as_ref().map(|err| {
-            html! { <p id="pin-error" class="pin-error" style="display: block;">{err}</p> }
-        });
-
-        html! {
-            <div class="login-container">
-                <div class="login-box">
-                    <div class="login-header" style="margin-bottom: 2rem;">
-                        <div class="login-icon-frame" style="display: flex; justify-content: center; margin-bottom: 1rem;">
-                            <img src="/favicon.svg" class="login-app-icon" alt="Pulse" style="width: 64px; height: 64px;" />
-                        </div>
-                        <h2 style="font-size: 1.5rem; font-weight: 500; color: var(--text); opacity: 0.8; line-height: 1.2;">
-                            {"ENTER SECURITY PIN"}
-                        </h2>
-                    </div>
-                    <form id="pin-form" onsubmit={ctx.link().callback(|e: SubmitEvent| { e.prevent_default(); Msg::SubmitPin })}>
-                        <div class="pin-wrapper">
-                            <input
-                                type="password"
-                                class="pin-input-field"
-                                value={self.pin_input.clone()}
-                                oninput={ctx.link().callback(|e: InputEvent| {
-                                    let input: web_sys::HtmlInputElement = e.target_unchecked_into();
-                                    Msg::PinInputChanged(input.value())
-                                })}
-                                placeholder={"• ".repeat(pin_len).trim().to_string()}
-                                maxlength={pin_len.to_string()}
-                                autofocus=true
-                            />
-                        </div>
-                    </form>
-                    <div class="pin-status">
-                        {error_html}
-                    </div>
-                </div>
-            </div>
-        }
-    }
-
     pub fn view_hud(&self, ctx: &Context<Self>) -> Html {
         let uptime_str = if let Some(stats) = &self.stats {
-            let uptime_hours = stats.uptime as f32 / 3600.0;
-            if uptime_hours >= 24.0 {
-                format!("{:.1} Days", uptime_hours / 24.0)
+            let seconds = stats.uptime;
+            let days = seconds / 86400;
+            let hours = (seconds % 86400) / 3600;
+            let minutes = (seconds % 3600) / 60;
+            let secs = seconds % 60;
+            if days > 0 {
+                format!("{}d {}h {}m", days, hours, minutes)
+            } else if hours > 0 {
+                format!("{}h {}m {}s", hours, minutes, secs)
             } else {
-                format!("{:.1} Hours", uptime_hours)
+                format!("{}m {}s", minutes, secs)
             }
         } else {
             "--".to_string()
@@ -76,14 +41,20 @@ impl App {
                                     <div class="hud-bar-frame">
                                         <div class="hud-bar-fill" style={format!("width: {}%;", stats.cpu_global)}></div>
                                     </div>
+                                    { self.render_sparkline(&self.cpu_history, 100.0) }
                                 </div>
                             }
                         } else {
-                            html! { <div class="card-loading">{"Loading..."}</div> }
+                            html! {
+                                <div class="card-metric-block">
+                                    <div class="card-loading">{"Connecting..."}</div>
+                                    { self.render_sparkline(&self.cpu_history, 100.0) }
+                                </div>
+                            }
                         }}
                     </div>
 
-                    // RAM Card
+                    // Memory Card
                     <div class="hud-metric-card">
                         <h3>{"MEMORY"}</h3>
                         {if let Some(stats) = &self.stats {
@@ -97,10 +68,16 @@ impl App {
                                     <div class="hud-bar-frame">
                                         <div class="hud-bar-fill" style={format!("width: {}%;", ram_percent)}></div>
                                     </div>
+                                    { self.render_sparkline(&self.ram_history, 100.0) }
                                 </div>
                             }
                         } else {
-                            html! { <div class="card-loading">{"Loading..."}</div> }
+                            html! {
+                                <div class="card-metric-block">
+                                    <div class="card-loading">{"Connecting..."}</div>
+                                    { self.render_sparkline(&self.ram_history, 100.0) }
+                                </div>
+                            }
                         }}
                     </div>
 
@@ -118,10 +95,16 @@ impl App {
                                     <div class="hud-bar-frame">
                                         <div class="hud-bar-fill" style={format!("width: {}%;", disk_percent)}></div>
                                     </div>
+                                    { self.render_sparkline(&self.disk_history, 100.0) }
                                 </div>
                             }
                         } else {
-                            html! { <div class="card-loading">{"Loading..."}</div> }
+                            html! {
+                                <div class="card-metric-block">
+                                    <div class="card-loading">{"Connecting..."}</div>
+                                    { self.render_sparkline(&self.disk_history, 100.0) }
+                                </div>
+                            }
                         }}
                     </div>
 
@@ -133,10 +116,16 @@ impl App {
                                 <div class="card-metric-block">
                                     <div class="card-main-val download-glow">{format!("↓ {}", self.format_bytes(stats.net_in))}</div>
                                     <div class="card-subtext upload-glow">{format!("↑ {}", self.format_bytes(stats.net_out))}</div>
+                                    { self.render_sparkline(&self.net_history, 0.0) }
                                 </div>
                             }
                         } else {
-                            html! { <div class="card-loading">{"Loading..."}</div> }
+                            html! {
+                                <div class="card-metric-block">
+                                    <div class="card-loading">{"Connecting..."}</div>
+                                    { self.render_sparkline(&self.net_history, 0.0) }
+                                </div>
+                            }
                         }}
                     </div>
 
@@ -152,6 +141,7 @@ impl App {
                                         <div class="hud-bar-frame">
                                             <div class="hud-bar-fill" style={format!("width: {}%;", gpu.usage)}></div>
                                         </div>
+                                        { self.render_sparkline(&self.gpu_history, 100.0) }
                                     </div>
                                 }
                             } else {
@@ -159,11 +149,17 @@ impl App {
                                     <div class="card-metric-block">
                                         <div class="card-main-val" style="color: var(--text-muted); font-size: 1.5rem;">{"OFFLINE"}</div>
                                         <div class="card-subtext">{"No Active GPU"}</div>
+                                        { self.render_sparkline(&self.gpu_history, 100.0) }
                                     </div>
                                 }
                             }
                         } else {
-                            html! { <div class="card-loading">{"Loading..."}</div> }
+                            html! {
+                                <div class="card-metric-block">
+                                    <div class="card-loading">{"Connecting..."}</div>
+                                    { self.render_sparkline(&self.gpu_history, 100.0) }
+                                </div>
+                            }
                         }}
                     </div>
                 </div>
@@ -174,23 +170,54 @@ impl App {
                         <div class="hud-console-controls">
                             <span>{format!("Uptime: {}", uptime_str)}</span>
                             <button onclick={ctx.link().callback(|_| Msg::ClearTerminal)}>{"CLEAR"}</button>
-                            <button onclick={ctx.link().callback(|_| Msg::ToggleTerminal)}>
-                                {if self.terminal_open { "COLLAPSE" } else { "EXPAND" }}
-                            </button>
                         </div>
                     </div>
-                    {if self.terminal_open {
-                        html! {
-                            <div class="hud-console-body">
-                                {for self.terminal_logs.iter().rev().map(|log| {
-                                    html! { <div class="console-line">{log}</div> }
-                                })}
-                            </div>
-                        }
-                    } else {
-                        html! {}
-                    }}
+                    <div class="hud-console-body">
+                        {for self.terminal_logs.iter().rev().map(|log| {
+                            html! { <div class="console-line">{log}</div> }
+                        })}
+                    </div>
                 </div>
+            </div>
+        }
+    }
+
+    fn render_sparkline(&self, history: &[f32], max_val: f32) -> Html {
+        if history.is_empty() {
+            return html! {
+                <div style="font-family: monospace; font-size: 0.8rem; color: var(--text-secondary); opacity: 0.5; padding: 0.5rem 0;">
+                    {"Awaiting telemetry..."}
+                </div>
+            };
+        }
+
+        let width = 140.0;
+        let height = 24.0;
+        let points_count = history.len();
+        
+        let effective_max = if max_val > 0.0 { max_val } else {
+            history.iter().copied().fold(0.0f32, f32::max).max(1.0)
+        };
+
+        let points = history.iter().enumerate().map(|(idx, &val)| {
+            let x = if points_count > 1 { (idx as f32 / (points_count - 1) as f32) * width } else { 0.0 };
+            let percent = (val / effective_max).min(1.0).max(0.0);
+            let y = height - (percent * (height - 4.0)) - 2.0;
+            format!("{:.1},{:.1}", x, y)
+        }).collect::<Vec<String>>().join(" ");
+
+        html! {
+            <div style="width: 100%; height: 24px; margin-top: 0.5rem; opacity: 0.85;">
+                <svg width="100%" height="24" viewBox={format!("0 0 {} {}", width, height)} preserveAspectRatio="none" style="display: block; overflow: visible;">
+                    <polyline
+                        fill="none"
+                        stroke="var(--primary)"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        points={points}
+                    />
+                </svg>
             </div>
         }
     }

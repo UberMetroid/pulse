@@ -19,6 +19,7 @@ pub struct SystemStats {
     pub gpu: Option<GpuStats>,
     pub uptime: u64,
     pub hostname: String,
+    pub sys_logs: Vec<String>,
 }
 
 pub struct SystemMonitor {
@@ -95,6 +96,9 @@ impl SystemMonitor {
             // Fetch Hostname
             let hostname = System::host_name().unwrap_or_else(|| "localhost".to_string());
 
+            // Fetch host system logs
+            let sys_logs = get_system_logs();
+
             let stats = SystemStats {
                 cpu_global,
                 cpu_cores,
@@ -107,6 +111,7 @@ impl SystemMonitor {
                 gpu,
                 uptime,
                 hostname,
+                sys_logs,
             };
 
             // Update shared state
@@ -127,4 +132,26 @@ pub fn start_monitor(state: AppState) {
         let monitor = SystemMonitor::new(shared_stats);
         monitor.run_loop(interval).await;
     });
+}
+
+fn get_system_logs() -> Vec<String> {
+    if let Ok(output) = std::process::Command::new("journalctl")
+        .args(["-n", "30", "--no-pager"])
+        .output()
+    {
+        if output.status.success() {
+            let text = String::from_utf8_lossy(&output.stdout);
+            return text.lines().map(|s| s.to_string()).collect();
+        }
+    }
+    if let Ok(output) = std::process::Command::new("dmesg")
+        .args(["-n", "30"])
+        .output()
+    {
+        if output.status.success() {
+            let text = String::from_utf8_lossy(&output.stdout);
+            return text.lines().map(|s| s.to_string()).collect();
+        }
+    }
+    vec!["[SYSTEM] Active logger. Monitoring dashboard...".to_string()]
 }
