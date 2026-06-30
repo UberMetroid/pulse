@@ -18,10 +18,8 @@ pub fn generate_session_id() -> String {
     use std::io::Read;
     let file = File::open("/dev/urandom").ok();
     let mut bytes = [0u8; 16];
-    if let Some(mut f) = file {
-        if f.read_exact(&mut bytes).is_ok() {
-            return bytes.iter().map(|b| format!("{:02x}", b)).collect();
-        }
+    if let Some(bytes) = file.and_then(|mut f| f.read_exact(&mut bytes).ok().map(|_| bytes)) {
+        return bytes.iter().map(|b| format!("{:02x}", b)).collect();
     }
     let random_val = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

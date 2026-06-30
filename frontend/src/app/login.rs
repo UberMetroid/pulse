@@ -6,7 +6,7 @@ impl App {
     pub fn view_login(&self, ctx: &Context<Self>) -> Html {
         let pin_len = self.pin_length;
         let is_locked = self.lockout_minutes.is_some();
-        
+
         let error_html = self.error_message.as_ref().map(|err| {
             html! { <p id="pin-error" class="pin-error" style="display: block;">{err}</p> }
         });

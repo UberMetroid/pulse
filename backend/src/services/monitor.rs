@@ -3,8 +3,8 @@ use std::time::{Duration, Instant};
 use sysinfo::{Networks, System};
 use tokio::sync::RwLock;
 
-use crate::state::AppState;
 use super::gpu::{self, GpuStats};
+use crate::state::AppState;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SystemStats {
@@ -64,7 +64,10 @@ impl SystemMonitor {
 
             // Calculate Network throughput (Bytes/sec)
             let now = Instant::now();
-            let duration_secs = now.duration_since(self.last_net_check).as_secs_f32().max(0.1);
+            let duration_secs = now
+                .duration_since(self.last_net_check)
+                .as_secs_f32()
+                .max(0.1);
             self.last_net_check = now;
 
             let mut total_in = 0;
@@ -89,7 +92,10 @@ impl SystemMonitor {
             let disk_used = total_space - total_available;
 
             // Fetch CPU brand
-            let cpu_brand = self.sys.cpus().first()
+            let cpu_brand = self
+                .sys
+                .cpus()
+                .first()
                 .map(|c| c.brand().trim().to_string())
                 .unwrap_or_else(|| "Unknown CPU".to_string());
 
@@ -142,23 +148,23 @@ pub fn start_monitor(state: AppState) {
 }
 
 fn get_system_logs() -> Vec<String> {
-    if let Ok(output) = std::process::Command::new("journalctl")
+    if let Some(output) = std::process::Command::new("journalctl")
         .args(["-n", "30", "--no-pager"])
         .output()
+        .ok()
+        .filter(|o| o.status.success())
     {
-        if output.status.success() {
-            let text = String::from_utf8_lossy(&output.stdout);
-            return text.lines().map(|s| s.to_string()).collect();
-        }
+        let text = String::from_utf8_lossy(&output.stdout);
+        return text.lines().map(|s| s.to_string()).collect();
     }
-    if let Ok(output) = std::process::Command::new("dmesg")
+    if let Some(output) = std::process::Command::new("dmesg")
         .args(["-n", "30"])
         .output()
+        .ok()
+        .filter(|o| o.status.success())
     {
-        if output.status.success() {
-            let text = String::from_utf8_lossy(&output.stdout);
-            return text.lines().map(|s| s.to_string()).collect();
-        }
+        let text = String::from_utf8_lossy(&output.stdout);
+        return text.lines().map(|s| s.to_string()).collect();
     }
     vec!["[SYSTEM] Active logger. Monitoring dashboard...".to_string()]
 }

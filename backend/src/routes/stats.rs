@@ -1,14 +1,16 @@
 use axum::{
     Json,
-    extract::{State, WebSocketUpgrade, ws::{WebSocket, Message}},
+    extract::{
+        State, WebSocketUpgrade,
+        ws::{Message, WebSocket},
+    },
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use std::time::Duration;
 
-
-use crate::state::AppState;
 use crate::routes::auth::is_authenticated;
+use crate::state::AppState;
 
 /// HTTP GET stats handler
 pub async fn handle_get_stats(

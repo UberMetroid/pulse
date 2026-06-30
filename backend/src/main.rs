@@ -7,12 +7,15 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tower_http::services::ServeDir;
-use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod config;
 mod routes;
 mod services;
 mod state;
+mod utils;
+
+#[cfg(test)]
+mod tests;
 
 use config::AppConfig;
 use routes::{auth, stats};
@@ -24,59 +27,7 @@ const RATE_LIMIT_WINDOW: Duration = Duration::from_secs(60);
 #[tokio::main]
 async fn main() {
     // 1. Logging setup
-    let log_dir = std::env::var("LOG_DIR").ok().or_else(|| {
-        let data_dir = std::path::Path::new("/app/data");
-        if data_dir.is_dir() {
-            Some("/app/data/log".to_string())
-        } else {
-            Some("/app/log".to_string())
-        }
-    });
-
-    let (file_layer_error, file_layer_app) = if let Some(ref dir) = log_dir {
-        if dir == "off" || dir == "none" || dir == "false" {
-            (None, None)
-        } else {
-            let _ = std::fs::create_dir_all(dir);
-            let error_file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(std::path::Path::new(dir).join("error.log"))
-                .ok();
-            let app_file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(std::path::Path::new(dir).join("app.log"))
-                .ok();
-
-            let error_layer = error_file.map(|file| {
-                tracing_subscriber::fmt::layer()
-                    .with_writer(std::sync::Mutex::new(file))
-                    .with_ansi(false)
-                    .with_filter(tracing_subscriber::filter::LevelFilter::WARN)
-            });
-
-            let app_layer = app_file.map(|file| {
-                tracing_subscriber::fmt::layer()
-                    .with_writer(std::sync::Mutex::new(file))
-                    .with_ansi(false)
-                    .with_filter(tracing_subscriber::filter::LevelFilter::INFO)
-            });
-
-            (error_layer, app_layer)
-        }
-    } else {
-        (None, None)
-    };
-
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .with(file_layer_error)
-        .with(file_layer_app)
-        .init();
+    utils::logger::init_logging();
 
     // 2. Load Configuration and Shared State
     let config = AppConfig::load();
@@ -86,7 +37,7 @@ async fn main() {
     // Start system metrics loop
     monitor::start_monitor(state.clone());
 
-    generate_pwa_manifest(&config.site_title);
+    utils::pwa::generate_pwa_manifest(&config.site_title);
 
     // Background cleanup task for per-IP rate-limiting
     let state_clone = state.clone();
@@ -114,6 +65,10 @@ async fn main() {
             )),
         )
         .route("/pin-required", axum::routing::get(auth::pin_required))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth::rate_limit_middleware,
+        ))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth::origin_validation_middleware,
@@ -146,7 +101,12 @@ async fn main() {
             l
         }
         Err(e) => {
-            tracing::warn!("Failed to bind IPv6 [::]:{} ({:?}). Falling back to IPv4 0.0.0.0:{}", config.port, e, config.port);
+            tracing::warn!(
+                "Failed to bind IPv6 [::]:{} ({:?}). Falling back to IPv4 0.0.0.0:{}",
+                config.port,
+                e,
+                config.port
+            );
             tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port))
                 .await
                 .expect("failed to bind to IPv4")
@@ -161,60 +121,9 @@ async fn main() {
     .expect("server error");
 }
 
-fn generate_pwa_manifest(site_title: &str) {
-    let dist_dir = std::path::Path::new("frontend/dist");
-    if !dist_dir.exists() {
-        return;
-    }
-
-    let pwa_manifest = serde_json::json!({
-        "name": site_title,
-        "short_name": site_title,
-        "description": "Minimalist server status and visor telemetry dashboard",
-        "start_url": "/",
-        "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#000000",
-        "icons": [
-            { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any" },
-            { "src": "favicon.png", "type": "image/png", "sizes": "192x192" },
-            { "src": "favicon.png", "type": "image/png", "sizes": "512x512" }
-        ],
-        "orientation": "any"
-    });
-
-    let _ = std::fs::write(
-        dist_dir.join("manifest.json"),
-        serde_json::to_string_pretty(&pwa_manifest).unwrap_or_default(),
-    );
-
-    // Also generate asset-manifest.json for service worker registration
-    let mut assets = Vec::new();
-    fn walk_dir(dir: &std::path::Path, prefix: &str, assets: &mut Vec<String>) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                let rel = if prefix.is_empty() {
-                    entry.file_name().to_string_lossy().to_string()
-                } else {
-                    format!("{}/{}", prefix, entry.file_name().to_string_lossy())
-                };
-                if path.is_dir() {
-                    walk_dir(&path, &rel, assets);
-                } else {
-                    assets.push(format!("/{}", rel));
-                }
-            }
-        }
-    }
-    walk_dir(dist_dir, "", &mut assets);
-    let _ = std::fs::write(
-        dist_dir.join("asset-manifest.json"),
-        serde_json::to_string_pretty(&assets).unwrap_or_default(),
-    );
-}
-
-async fn serve_config(axum::extract::State(state): axum::extract::State<AppState>) -> impl axum::response::IntoResponse {
+async fn serve_config(
+    axum::extract::State(state): axum::extract::State<AppState>,
+) -> impl axum::response::IntoResponse {
     axum::Json(serde_json::json!({
         "siteTitle": state.config.site_title,
         "pinRequired": state.config.pin.is_some(),
@@ -265,7 +174,9 @@ async fn fix_content_length_middleware(
         .is_some_and(|s| s.starts_with("text/html"));
 
     if is_html {
-        response.headers_mut().remove(axum::http::header::CONTENT_LENGTH);
+        response
+            .headers_mut()
+            .remove(axum::http::header::CONTENT_LENGTH);
     }
 
     response
@@ -276,7 +187,10 @@ async fn serve_service_worker() -> impl axum::response::IntoResponse {
     (
         [
             (axum::http::header::CONTENT_TYPE, "application/javascript"),
-            (axum::http::header::CACHE_CONTROL, "no-cache, no-store, must-revalidate"),
+            (
+                axum::http::header::CACHE_CONTROL,
+                "no-cache, no-store, must-revalidate",
+            ),
             (axum::http::header::EXPIRES, "0"),
         ],
         content,

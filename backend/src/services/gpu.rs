@@ -1,6 +1,6 @@
-use std::process::Command;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GpuStats {
@@ -23,10 +23,13 @@ pub fn get_gpu_stats() -> Vec<GpuStats> {
 }
 
 fn get_nvidia_stats() -> Option<Vec<GpuStats>> {
-    if !Command::new("which").arg("nvidia-smi").status().map(|s| s.success()).unwrap_or(false) {
-        if !Path::new("/dev/nvidiactl").exists() {
-            return None;
-        }
+    let has_nvidia_smi = Command::new("which")
+        .arg("nvidia-smi")
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    if !has_nvidia_smi && !Path::new("/dev/nvidiactl").exists() {
+        return None;
     }
 
     let output = Command::new("nvidia-smi")
@@ -87,8 +90,12 @@ fn get_amd_stats() -> Option<Vec<GpuStats>> {
                 let used_path = device_path.join("mem_info_vram_used");
                 let total_path = device_path.join("mem_info_vram_total");
                 if used_path.exists() && total_path.exists() {
-                    mem_used = fs::read_to_string(used_path).ok().and_then(|s| s.trim().parse::<u64>().ok());
-                    mem_total = fs::read_to_string(total_path).ok().and_then(|s| s.trim().parse::<u64>().ok());
+                    mem_used = fs::read_to_string(used_path)
+                        .ok()
+                        .and_then(|s| s.trim().parse::<u64>().ok());
+                    mem_total = fs::read_to_string(total_path)
+                        .ok()
+                        .and_then(|s| s.trim().parse::<u64>().ok());
                 }
 
                 let mut temp = None;
@@ -96,13 +103,12 @@ fn get_amd_stats() -> Option<Vec<GpuStats>> {
                 if let Ok(hwmons) = fs::read_dir(hwmon_path) {
                     for hwmon in hwmons.flatten() {
                         let temp_file = hwmon.path().join("temp1_input");
-                        if temp_file.exists() {
-                            if let Ok(raw_temp) = fs::read_to_string(temp_file) {
-                                if let Ok(milli_celsius) = raw_temp.trim().parse::<f32>() {
-                                    temp = Some(milli_celsius / 1000.0);
-                                    break;
-                                }
-                            }
+                        if let Some(milli_celsius) = fs::read_to_string(temp_file)
+                            .ok()
+                            .and_then(|s| s.trim().parse::<f32>().ok())
+                        {
+                            temp = Some(milli_celsius / 1000.0);
+                            break;
                         }
                     }
                 }

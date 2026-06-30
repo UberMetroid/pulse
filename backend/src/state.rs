@@ -24,12 +24,6 @@ impl AppState {
             shared_stats,
         }
     }
-
-    pub async fn update_stats(&self, stats: SystemStats) {
-        let mut stats_lock = self.shared_stats.write().await;
-        *stats_lock = Some(stats);
-    }
-
     pub async fn check_rate_limit(
         &self,
         ip: IpAddr,

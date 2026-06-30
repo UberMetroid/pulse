@@ -77,18 +77,22 @@ impl Component for App {
         let link = ctx.link().clone();
         wasm_bindgen_futures::spawn_local(async move {
             match Request::get("/config").send().await {
-                Ok(resp) => {
-                    match resp.json::<Value>().await {
-                        Ok(json) => {
-                            link.send_message(Msg::LoadConfig(json));
-                        }
-                        Err(err) => {
-                            link.send_message(Msg::WsError(format!("[ERROR] Failed to parse config JSON: {:?}", err)));
-                        }
+                Ok(resp) => match resp.json::<Value>().await {
+                    Ok(json) => {
+                        link.send_message(Msg::LoadConfig(json));
                     }
-                }
+                    Err(err) => {
+                        link.send_message(Msg::WsError(format!(
+                            "[ERROR] Failed to parse config JSON: {:?}",
+                            err
+                        )));
+                    }
+                },
                 Err(err) => {
-                    link.send_message(Msg::WsError(format!("[ERROR] Failed to fetch /config: {:?}", err)));
+                    link.send_message(Msg::WsError(format!(
+                        "[ERROR] Failed to fetch /config: {:?}",
+                        err
+                    )));
                 }
             }
         });

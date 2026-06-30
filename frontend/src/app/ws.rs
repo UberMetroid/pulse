@@ -1,10 +1,10 @@
 use crate::app::App;
 use crate::app::Msg;
 use crate::types::SystemStats;
-use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
-use web_sys::{MessageEvent, WebSocket, CloseEvent};
+use wasm_bindgen::closure::Closure;
+use web_sys::{CloseEvent, MessageEvent, WebSocket};
 use yew::prelude::*;
 
 impl App {
@@ -21,8 +21,12 @@ impl App {
         let ws_protocol = if protocol == "https:" { "wss:" } else { "ws:" };
         let ws_url = format!("{}//{}/api/stats/ws", ws_protocol, host);
 
-        web_sys::console::log_1(&JsValue::from_str(&format!("[WS] Connecting to {}", ws_url)));
-        self.terminal_logs.push(format!("[WS] Connecting to {}...", ws_url));
+        web_sys::console::log_1(&JsValue::from_str(&format!(
+            "[WS] Connecting to {}",
+            ws_url
+        )));
+        self.terminal_logs
+            .push(format!("[WS] Connecting to {}...", ws_url));
 
         let ws = WebSocket::new(&ws_url);
         let ws = match ws {
@@ -39,7 +43,9 @@ impl App {
         let link = ctx.link().clone();
         let onopen_callback = Closure::<dyn FnMut()>::new(move || {
             web_sys::console::log_1(&JsValue::from_str("[WS] Connection opened successfully."));
-            link.send_message(Msg::WsLog("[WS] Connection established. Dashboard online.".to_string()));
+            link.send_message(Msg::WsLog(
+                "[WS] Connection established. Dashboard online.".to_string(),
+            ));
         });
         ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
         onopen_callback.forget();
@@ -49,7 +55,7 @@ impl App {
         let onmessage_callback = Closure::<dyn FnMut(MessageEvent)>::new(move |e: MessageEvent| {
             let data = e.data();
             web_sys::console::log_2(&JsValue::from_str("[WS] Received raw data:"), &data);
-            
+
             if let Some(txt) = data.as_string() {
                 match serde_json::from_str::<SystemStats>(&txt) {
                     Ok(stats) => {
@@ -62,7 +68,10 @@ impl App {
                     }
                 }
             } else {
-                let err_msg = format!("[WS] Received non-string data (type: {})", data.js_typeof().as_string().unwrap_or_default());
+                let err_msg = format!(
+                    "[WS] Received non-string data (type: {})",
+                    data.js_typeof().as_string().unwrap_or_default()
+                );
                 web_sys::console::warn_1(&JsValue::from_str(&err_msg));
                 link.send_message(Msg::WsError(err_msg));
             }
