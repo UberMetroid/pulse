@@ -695,8 +695,8 @@
 .sys-info-right pre {
     margin: 0;
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.95rem;
-    line-height: 1.15;
+    font-size: 0.78rem;
+    line-height: 1.05;
     color: var(--primary);
     text-shadow: 0 0 8px var(--primary-glow);
 }
