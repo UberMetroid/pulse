@@ -751,6 +751,26 @@
     text-shadow: 0 0 8px rgba(0, 120, 212, 0.75) !important;
 }
 
+.sys-info-right pre.os-talos {
+    color: #00A36C !important;
+    text-shadow: 0 0 8px rgba(0, 163, 108, 0.75) !important;
+}
+
+.sys-info-right pre.os-bottlerocket {
+    color: #FF9900 !important;
+    text-shadow: 0 0 8px rgba(255, 153, 0, 0.75) !important;
+}
+
+.sys-info-right pre.os-flatcar {
+    color: #F46C36 !important;
+    text-shadow: 0 0 8px rgba(244, 108, 54, 0.75) !important;
+}
+
+.sys-info-right pre.os-alpine {
+    color: #0D597F !important;
+    text-shadow: 0 0 8px rgba(13, 89, 127, 0.75) !important;
+}
+
 .sys-info-right pre.os-generic {
     color: var(--primary) !important;
     text-shadow: 0 0 8px var(--primary-glow) !important;

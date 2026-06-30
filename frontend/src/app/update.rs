@@ -164,7 +164,7 @@ impl App {
                 let next_idx = match self.os_override {
                     None => Some(0),
                     Some(idx) => {
-                        if idx >= 10 {
+                        if idx >= 14 {
                             None
                         } else {
                             Some(idx + 1)
@@ -184,7 +184,11 @@ impl App {
                     Some(7) => "OS Logo: Gentoo".to_string(),
                     Some(8) => "OS Logo: GNU Guix".to_string(),
                     Some(9) => "OS Logo: Windows 11".to_string(),
-                    Some(10) => "OS Logo: Fallback/Tux".to_string(),
+                    Some(10) => "OS Logo: Talos Linux".to_string(),
+                    Some(11) => "OS Logo: AWS Bottlerocket".to_string(),
+                    Some(12) => "OS Logo: Flatcar Linux".to_string(),
+                    Some(13) => "OS Logo: Alpine Linux".to_string(),
+                    Some(14) => "OS Logo: Fallback/Tux".to_string(),
                     _ => "OS Logo: Custom".to_string(),
                 };
                 self.notify(ctx, notify_text);

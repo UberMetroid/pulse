@@ -31,7 +31,11 @@ impl App {
                 Some(7) => "gentoo".to_string(),
                 Some(8) => "guix".to_string(),
                 Some(9) => "win11".to_string(),
-                Some(10) => "generic".to_string(),
+                Some(10) => "talos".to_string(),
+                Some(11) => "bottlerocket".to_string(),
+                Some(12) => "flatcar".to_string(),
+                Some(13) => "alpine".to_string(),
+                Some(14) => "generic".to_string(),
                 _ => "generic".to_string(),
             };
 
@@ -218,6 +222,51 @@ impl App {
                     {"      ██████  ██████\n"}
                     {"      ██████  ██████\n"}
                     {"      ██████  ██████"}
+                </pre>
+            }
+        } else if os.contains("talos") {
+            html! {
+                <pre class="os-talos">
+                    {"        ▄▄██████▄▄\n"}
+                    {"      ▄████▀▀▀▀████▄\n"}
+                    {"     ████▀  ██  ▀████\n"}
+                    {"     ████   ██   ████\n"}
+                    {"     ████▄  ██  ▄████\n"}
+                    {"      ▀████▄▄▄▄████▀\n"}
+                    {"        ▀▀██████▀▀"}
+                </pre>
+            }
+        } else if os.contains("bottlerocket") {
+            html! {
+                <pre class="os-bottlerocket">
+                    {"          ▗▄▖\n"}
+                    {"         ▗███▖\n"}
+                    {"         █████\n"}
+                    {"        ███████\n"}
+                    {"       █████████\n"}
+                    {"      ████ ▀ ████\n"}
+                    {"      ██▀     ▀██"}
+                </pre>
+            }
+        } else if os.contains("flatcar") {
+            html! {
+                <pre class="os-flatcar">
+                    {"     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n"}
+                    {"     ██  ██  ██  ██\n"}
+                    {"     ██  ██  ██  ██\n"}
+                    {"     ▀▀▀▀▀▀▀▀▀▀▀▀▀▀\n"}
+                    {"     ▐████████████▌"}
+                </pre>
+            }
+        } else if os.contains("alpine") {
+            html! {
+                <pre class="os-alpine">
+                    {"            ▲\n"}
+                    {"           ▲██\n"}
+                    {"          █████\n"}
+                    {"         ███████\n"}
+                    {"        ███▀ ▀███\n"}
+                    {"       ██▀     ▀██"}
                 </pre>
             }
         } else {
