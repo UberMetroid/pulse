@@ -139,7 +139,6 @@ async fn serve_config(
         "monitorStorage": state.config.monitor_storage,
         "monitorNetwork": state.config.monitor_network,
         "monitorGpu": state.config.monitor_gpu,
-        "monitorConsole": state.config.monitor_console,
     }))
 }
 

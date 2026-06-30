@@ -21,7 +21,6 @@ pub struct AppConfig {
     pub monitor_storage: bool,
     pub monitor_network: bool,
     pub monitor_gpu: bool,
-    pub monitor_console: bool,
 }
 
 impl AppConfig {
@@ -135,10 +134,6 @@ impl AppConfig {
             .map(|v| v != "false" && v != "off")
             .unwrap_or(true);
 
-        let monitor_console = std::env::var("PULSE_MONITOR_CONSOLE")
-            .map(|v| v == "true" || v == "on")
-            .unwrap_or(false);
-
         Self {
             port,
             site_title,
@@ -161,7 +156,6 @@ impl AppConfig {
             monitor_storage,
             monitor_network,
             monitor_gpu,
-            monitor_console,
         }
     }
 }
