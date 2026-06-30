@@ -63,6 +63,7 @@ pub struct App {
     pub monitor_storage: bool,
     pub monitor_network: bool,
     pub monitor_gpu: bool,
+    pub monitor_console: bool,
     pub console_paused: bool,
 }
 
@@ -127,6 +128,7 @@ impl Component for App {
             monitor_storage: true,
             monitor_network: true,
             monitor_gpu: true,
+            monitor_console: true,
             console_paused: false,
         }
     }

@@ -28,6 +28,7 @@ impl App {
                 self.monitor_storage = json["monitorStorage"].as_bool().unwrap_or(true);
                 self.monitor_network = json["monitorNetwork"].as_bool().unwrap_or(true);
                 self.monitor_gpu = json["monitorGpu"].as_bool().unwrap_or(true);
+                self.monitor_console = json["monitorConsole"].as_bool().unwrap_or(true);
 
                 self.terminal_logs.push(format!(
                     "[SYSTEM] Config loaded. Site: {}, Pin Required: {}",

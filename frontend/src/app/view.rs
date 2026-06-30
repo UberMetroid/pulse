@@ -6,7 +6,7 @@ impl App {
     pub fn view_hud(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div class="hud-visor-container">
-                { self.view_console(ctx) }
+                { if self.monitor_console { self.view_console(ctx) } else { html! {} } }
                 { self.view_metrics_grid() }
             </div>
         }
