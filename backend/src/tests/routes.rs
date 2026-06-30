@@ -60,7 +60,9 @@ async fn pin_required_when_set() {
     let connect_info = ConnectInfo(SocketAddr::from(([127, 0, 0, 1], 12345)));
     let headers = HeaderMap::new();
 
-    let res = pin_required(headers, connect_info, State(state)).await.into_response();
+    let res = pin_required(headers, connect_info, State(state))
+        .await
+        .into_response();
     assert_eq!(res.status(), StatusCode::OK);
 }
 

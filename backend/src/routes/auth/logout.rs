@@ -23,12 +23,14 @@ pub async fn logout(headers: HeaderMap, State(state): State<AppState>) -> impl I
         state.active_sessions.write().await.remove(&session_id);
     }
 
+    let cookie_clear = format!(
+        "{}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+        COOKIE_NAME
+    );
     let mut headers = HeaderMap::new();
     headers.insert(
         header::SET_COOKIE,
-        header::HeaderValue::from_static(
-            "PULSE_PIN=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
-        ),
+        header::HeaderValue::from_str(&cookie_clear).unwrap(),
     );
     (
         StatusCode::OK,
