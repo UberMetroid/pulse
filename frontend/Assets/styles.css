@@ -559,6 +559,25 @@
     box-sizing: border-box;
 }
 
+.hud-visor-container.no-console {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 120px);
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.hud-visor-container.no-console .hud-visor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    max-width: 1000px;
+    width: 100%;
+    margin: auto;
+}
+
 @media (max-width: 1024px) {
     .hud-visor-container {
         grid-template-columns: 1fr;

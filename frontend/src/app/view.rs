@@ -5,7 +5,7 @@ use yew::prelude::*;
 impl App {
     pub fn view_hud(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <div class="hud-visor-container">
+            <div class={classes!("hud-visor-container", (!self.monitor_console).then_some("no-console"))}>
                 { if self.monitor_console { self.view_console(ctx) } else { html! {} } }
                 { self.view_metrics_grid() }
             </div>
